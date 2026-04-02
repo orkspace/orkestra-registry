@@ -1,0 +1,9 @@
+cd postgres/v14
+
+# Push all files as a single artifact
+oras push ghcr.io/myorg/postgres:v14 \
+  crd.yaml:application/yaml \
+  katalog.yaml:application/yaml \
+  komposer.yaml:application/yaml \
+  cr.yaml:application/yaml \
+  README.md:text/markdown
