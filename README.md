@@ -108,7 +108,7 @@ See **[CONTRIBUTING.md](./CONTRIBUTING.md)** for full guidelines, including test
 
 ## License
 
-All patterns in this repository are licensed under the [MIT License](LICENSE), the same license as the [Orkestra runtime](https://github.com/orkestra-sh/orkestra).
+All patterns in this repository are licensed under the [MIT License](LICENSE), the same license as the [Orkestra runtime](https://github.com/orkspace/orkestra).
 
 ---
 

@@ -27,7 +27,7 @@ In your Katalog, reference the extension:
 ```yaml
 reconciler:
   hooks:
-    location: github.com/orkestra-sh/orkestra-registry/typed-extensions/hooks/postgres-hooks@v1.0.0
+    location: github.com/orkspace/orkestra-registry/typed-extensions/hooks/postgres-hooks@v1.0.0
     function: PostgresHooks
 ```
 

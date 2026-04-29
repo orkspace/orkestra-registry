@@ -88,10 +88,10 @@ All contributions should be tested. For patterns, include a test Komposer and CR
 
 All contributions are reviewed by maintainers. Please be patient; we will respond as soon as possible.
 
-For questions or suggestions, open a [GitHub Discussion](https://github.com/orkestra-sh/orkestra-registry/discussions).
+For questions or suggestions, open a [GitHub Discussion](https://github.com/orkspace/orkestra-registry/discussions).
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE), the same license as the [Orkestra runtime](https://github.com/orkestra-sh/orkestra).
+By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE), the same license as the [Orkestra runtime](https://github.com/orkspace/orkestra).
 
 **Thank you for helping build the future of declarative operators!** 🎼
