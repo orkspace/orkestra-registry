@@ -1,0 +1,133 @@
+apiVersion: orkestra.orkspace.io/v1
+kind: Motif
+metadata:
+  name: postgres
+  version: v17
+  description: >
+    PostgreSQL StatefulSet with persistent storage, headless Service for pod DNS,
+    client Service, and pgAdmin management UI.
+  author: orkspace
+  license: Apache-2.0
+
+inputs:
+  - name: image
+    description: PostgreSQL image
+    default: "postgres:latest"
+
+  - name: replicas
+    description: Number of replicas
+    default: "1"
+
+  - name: resourceProfile
+    description: CPU/memory profile (small, burst, standard, compute-heavy)
+    default: "standard"
+
+  - name: volumeSize
+    description: PVC storage size for the data volume
+    default: "10Gi"
+
+  - name: storageClass
+    description: StorageClass for dynamic PVC provisioning
+    default: "standard"
+
+  - name: database
+    description: Default database name
+    default: "app"
+
+  - name: username
+    description: PostgreSQL superuser name
+    default: "postgres"
+
+  - name: pgAdminImage
+    description: pgAdmin management UI image
+    default: "dpage/pgadmin4:latest"
+
+  - name: enableUI
+    description: Deploy the pgAdmin management UI (true/false)
+    default: "true"
+
+resources:
+  statefulSets:
+    - name: "{{ .metadata.name }}-postgres"
+      image: "{{ .inputs.image }}"
+      replicas: "{{ .inputs.replicas }}"
+      serviceName: "{{ .metadata.name }}-postgres-headless"
+      port: 5432
+      resources:
+        profile: "{{ .inputs.resourceProfile }}"
+      reconcile: true
+      probes:
+        startup:
+          type: tcp
+          profile: slow-start
+        liveness:
+          type: tcp
+          profile: standard
+        readiness:
+          type: tcp
+          profile: standard
+      volumeClaimTemplates:
+        - name: data
+          storageClass: "{{ .inputs.storageClass }}"
+          storageSize: "{{ .inputs.volumeSize }}"
+          mountPath: /var/lib/postgresql/data
+      env:
+        POSTGRES_DB:
+          value: "{{ .inputs.database }}"
+        POSTGRES_USER:
+          value: "{{ .inputs.username }}"
+
+  services:
+    - name: "{{ .metadata.name }}-postgres-headless"
+      headless: true
+      port: 5432
+      targetPort: 5432
+      reconcile: true
+
+    - name: "{{ .metadata.name }}-postgres"
+      port: 5432
+      targetPort: 5432
+      reconcile: true
+
+    - name: "{{ .metadata.name }}-pgadmin-svc"
+      port: 80
+      targetPort: 80
+      type: LoadBalancer
+      reconcile: true
+      when:
+        - field: inputs.enableUI
+          equals: "true"
+
+  deployments:
+    - name: "{{ .metadata.name }}-pgadmin"
+      image: "{{ .inputs.pgAdminImage }}"
+      env:
+        PGADMIN_DEFAULT_EMAIL:
+          value: "admin@orkestra.local"
+        PGADMIN_DEFAULT_PASSWORD:
+          value: "admin"
+      port: 80
+      resources:
+        profile: "{{ .inputs.resourceProfile }}"
+      reconcile: true
+      probes:
+        liveness:
+          type: http
+          path: /misc/ping
+          profile: standard
+        readiness:
+          type: http
+          path: /misc/ping
+          profile: standard
+      when:
+        - field: inputs.enableUI
+          equals: "true"
+
+status:
+  fields:
+    - path: postgresReady
+      value: "{{ AllReplicasReady .children.statefulset }}"
+    - path: connectionString
+      value: "postgresql://{{ .inputs.username }}@{{ .metadata.name }}-postgres.{{ .metadata.namespace }}.svc.cluster.local:5432/{{ .inputs.database }}"
+    - path: pgAdminUrl
+      value: "http://{{ .metadata.name }}-pgadmin-svc.{{ .metadata.namespace }}.svc.cluster.local"

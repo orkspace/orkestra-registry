@@ -1,0 +1,139 @@
+apiVersion: orkestra.orkspace.io/v1
+kind: Motif
+metadata:
+  name: kafka
+  version: v3
+  description: >
+    Apache Kafka StatefulSet in KRaft mode (no Zookeeper), persistent storage,
+    headless Service for broker DNS, external Service, and Kafka UI management console.
+  author: orkspace
+  license: Apache-2.0
+
+inputs:
+  - name: image
+    description: Apache Kafka image (KRaft-capable)
+    default: "apache/kafka:latest"
+
+  - name: replicas
+    description: Number of broker/controller replicas
+    default: "1"
+
+  - name: resourceProfile
+    description: CPU/memory profile (small, burst, standard, compute-heavy)
+    default: "compute-heavy"
+
+  - name: volumeSize
+    description: PVC storage size for the log directory
+    default: "20Gi"
+
+  - name: storageClass
+    description: StorageClass for dynamic PVC provisioning
+    default: "standard"
+
+  - name: kafkaUiImage
+    description: Kafka UI management console image
+    default: "provectuslabs/kafka-ui:latest"
+
+  - name: enableUI
+    description: Deploy the Kafka UI management console (true/false)
+    default: "true"
+
+resources:
+  statefulSets:
+    - name: "{{ .metadata.name }}-kafka"
+      image: "{{ .inputs.image }}"
+      replicas: "{{ .inputs.replicas }}"
+      serviceName: "{{ .metadata.name }}-kafka-headless"
+      port: 9092
+      resources:
+        profile: "{{ .inputs.resourceProfile }}"
+      reconcile: true
+      probes:
+        startup:
+          type: tcp
+          profile: slow-start
+        liveness:
+          type: tcp
+          profile: standard
+        readiness:
+          type: tcp
+          profile: standard
+      volumeClaimTemplates:
+        - name: data
+          storageClass: "{{ .inputs.storageClass }}"
+          storageSize: "{{ .inputs.volumeSize }}"
+          mountPath: /var/lib/kafka/data
+      env:
+        KAFKA_NODE_ID:
+          value: "1"
+        KAFKA_PROCESS_ROLES:
+          value: "broker,controller"
+        KAFKA_LISTENERS:
+          value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+        KAFKA_ADVERTISED_LISTENERS:
+          value: "PLAINTEXT://{{ .metadata.name }}-kafka-0.{{ .metadata.name }}-kafka-headless.{{ .metadata.namespace }}.svc.cluster.local:9092"
+        KAFKA_CONTROLLER_QUORUM_VOTERS:
+          value: "1@{{ .metadata.name }}-kafka-0.{{ .metadata.name }}-kafka-headless.{{ .metadata.namespace }}.svc.cluster.local:9093"
+        KAFKA_CONTROLLER_LISTENER_NAMES:
+          value: "CONTROLLER"
+        KAFKA_INTER_BROKER_LISTENER_NAME:
+          value: "PLAINTEXT"
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:
+          value: "1"
+        KAFKA_LOG_DIRS:
+          value: "/var/lib/kafka/data"
+
+  services:
+    - name: "{{ .metadata.name }}-kafka-headless"
+      headless: true
+      port: 9092
+      targetPort: 9092
+      reconcile: true
+
+    - name: "{{ .metadata.name }}-kafka"
+      port: 9092
+      targetPort: 9092
+      reconcile: true
+
+    - name: "{{ .metadata.name }}-kafka-ui-svc"
+      port: 8080
+      targetPort: 8080
+      type: LoadBalancer
+      reconcile: true
+      when:
+        - field: inputs.enableUI
+          equals: "true"
+
+  deployments:
+    - name: "{{ .metadata.name }}-kafka-ui"
+      image: "{{ .inputs.kafkaUiImage }}"
+      env:
+        KAFKA_CLUSTERS_0_NAME:
+          value: "{{ .metadata.name }}"
+        KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS:
+          value: "{{ .metadata.name }}-kafka.{{ .metadata.namespace }}.svc.cluster.local:9092"
+      port: 8080
+      resources:
+        profile: "{{ .inputs.resourceProfile }}"
+      reconcile: true
+      probes:
+        liveness:
+          type: http
+          path: /actuator/health
+          profile: standard
+        readiness:
+          type: http
+          path: /actuator/health
+          profile: standard
+      when:
+        - field: inputs.enableUI
+          equals: "true"
+
+status:
+  fields:
+    - path: kafkaReady
+      value: "{{ allReplicasReady .children.statefulset }}"
+    - path: bootstrapServers
+      value: "{{ .metadata.name }}-kafka.{{ .metadata.namespace }}.svc.cluster.local:9092"
+    - path: kafkaUiUrl
+      value: "http://{{ .metadata.name }}-kafka-ui-svc.{{ .metadata.namespace }}.svc.cluster.local:8080"
