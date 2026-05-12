@@ -2,12 +2,20 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: rabbitmq
-  version: v3
+  version: 0.1.0
   description: >
     RabbitMQ StatefulSet with persistent storage, headless Service for cluster node DNS,
     AMQP Service, and built-in management UI (port 15672) via the management plugin.
   author: orkspace
   license: Apache-2.0
+  tags:
+    - rabbitmq
+    - messaging
+    - amqp
+    - statefulset
+    - storage
+    - cluster
+    - ui
 
 inputs:
   - name: image
@@ -51,7 +59,6 @@ resources:
       port: 5672
       resources:
         profile: "{{ .inputs.resourceProfile }}"
-      reconcile: true
       probes:
         startup:
           type: tcp
@@ -79,18 +86,15 @@ resources:
       headless: true
       port: 5672
       targetPort: 5672
-      reconcile: true
 
     - name: "{{ .metadata.name }}-rabbitmq"
       port: 5672
       targetPort: 5672
-      reconcile: true
 
     - name: "{{ .metadata.name }}-rabbitmq-management"
       port: 15672
       targetPort: 15672
       type: LoadBalancer
-      reconcile: true
       when:
         - field: inputs.enableUI
           equals: "true"

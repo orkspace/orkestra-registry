@@ -1,6 +1,8 @@
-# Orkestra Motifs — Stateful Services
+# Motif Patterns — Reusable Resource Blueprints
 
-Motifs are pre-built, opinionated Orkestra resource bundles for common stateful services. A single motif declaration in your Katalog replaces dozens of lines of repetitive YAML: it gives you a StatefulSet, headless service, client service, management UI, persistent storage, health probes, and resource profiles — all tuned for production use.
+Motifs are a kind of Orkestra pattern. They are pre-built, reusable resource blueprints that any Katalog can import. A single motif import replaces dozens of lines of YAML — StatefulSet, services, storage, probes, and optional UI — all tuned for production use.
+
+OCI path: `ghcr.io/orkspace/orkestra-registry/patterns/motifs/<name>:<version>`
 
 ## Available Motifs
 
@@ -27,7 +29,7 @@ spec:
       operatorBox:
         onCreate:
           motifs:
-            - ref: ghcr.io/orkspace/orkestra-registry/motifs/postgres@v17
+            - ref: ghcr.io/orkspace/orkestra-registry/patterns/motifs/postgres@v17
               inputs:
                 image: "{{ .spec.postgresImage | default \"postgres:latest\" }}"
                 database: "{{ .spec.dbName }}"

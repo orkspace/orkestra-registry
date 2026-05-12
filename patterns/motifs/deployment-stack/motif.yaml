@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: deployment-stack
-  version: v1
+  version: 0.1.0
   description: >
     Full application deployment stack: ServiceAccount, Role, RoleBinding,
     Deployment, Service, HPA, PDB, and optional Ingress.
@@ -10,6 +10,15 @@ metadata:
     Ingress is only created when the CR data.host field is non-empty.
   author: orkspace
   license: Apache-2.0
+  tags:
+    - deployment
+    - service
+    - autoscaling
+    - ingress
+    - rbac
+    - full-stack
+    - application
+    - multi-resource
 
 inputs:
   - name: name
@@ -52,21 +61,16 @@ inputs:
       prevents it from being created until data.host is set in the CR.
 
 resources:
-
-
   namespaces:
     - name: ${{ .inputs.namespace }}
-      reconcile: true
 
   serviceAccounts:
     - name: '{{ .inputs.name }}-sa'
       namespace: '{{ .inputs.namespace }}'
-      reconcile: true
 
   roles:
     - name: '{{ .inputs.name }}-role'
       namespace: '{{ .inputs.namespace }}'
-      reconcile: true
       rules:
         - apiGroups: ["apps"]
           resources: ["deployments"]
@@ -77,7 +81,6 @@ resources:
   roleBindings:
     - name: '{{ .inputs.name }}-rolebinding'
       namespace: '{{ .inputs.namespace }}'
-      reconcile: true
       roleRef:
         name: '{{ .inputs.name }}-role'
       subjects:
@@ -94,7 +97,6 @@ resources:
       serviceAccountName: '{{ .inputs.name }}-sa'
       resources:
         profile: '{{ .inputs.resourceProfile }}'
-      reconcile: true
       when:
         - field: data.image
           exists: true
@@ -104,7 +106,6 @@ resources:
       namespace: '{{ .inputs.namespace }}'
       port: '{{ .inputs.port }}'
       targetPort: '{{ .inputs.port }}'
-      reconcile: true
 
   ingresses:
     - name: '{{ .inputs.name }}-ingress'
@@ -113,7 +114,6 @@ resources:
       serviceName: '{{ .inputs.name }}-svc'
       servicePort: '{{ .inputs.port }}'
       ingressClass: '{{ .inputs.ingressClass }}'
-      reconcile: true
       when:
         - field: data.host
           exists: true
@@ -128,7 +128,6 @@ resources:
       minReplicas: '{{ .inputs.replicas }}'
       maxReplicas: '{{ .inputs.maxReplicas }}'
       targetCPUUtilizationPercentage: "70"
-      reconcile: true
       when:
         - field: data.image
           exists: true
@@ -137,7 +136,6 @@ resources:
     - name: '{{ .inputs.name }}-pdb'
       namespace: '{{ .inputs.namespace }}'
       minAvailable: "1"
-      reconcile: true
       when:
         - field: data.image
           exists: true

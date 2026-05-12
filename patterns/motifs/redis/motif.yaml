@@ -2,12 +2,20 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: redis
-  version: v7
+  version: 0.1.0
   description: >
     Redis StatefulSet with optional persistent storage, headless Service for pod DNS,
     client Service, and Redis Commander management UI. Works with redis:6 through redis:7.
   author: orkspace
   license: Apache-2.0
+  tags:
+    - redis
+    - cache
+    - key-value
+    - statefulset
+    - optional-storage
+    - ui
+    - headless-service
 
 inputs:
   - name: image
@@ -47,7 +55,6 @@ resources:
       port: 6379
       resources:
         profile: "{{ .inputs.resourceProfile }}"
-      reconcile: true
       probes:
         startup:
           type: tcp
@@ -69,18 +76,15 @@ resources:
       headless: true
       port: 6379
       targetPort: 6379
-      reconcile: true
 
     - name: "{{ .metadata.name }}-redis"
       port: 6379
       targetPort: 6379
-      reconcile: true
 
     - name: "{{ .metadata.name }}-commander-svc"
       port: 8081
       targetPort: 8081
       type: LoadBalancer
-      reconcile: true
       when:
         - field: inputs.enableUI
           equals: "true"
@@ -94,7 +98,6 @@ resources:
       port: 8081
       resources:
         profile: "{{ .inputs.resourceProfile }}"
-      reconcile: true
       probes:
         liveness:
           type: http

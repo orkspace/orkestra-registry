@@ -2,12 +2,20 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: mysql
-  version: v8
+  version: 0.1.0
   description: >
     MySQL StatefulSet with persistent storage, headless Service for pod DNS,
     client Service, and phpMyAdmin management UI.
   author: orkspace
   license: Apache-2.0
+  tags:
+    - mysql
+    - database
+    - sql
+    - statefulset
+    - storage
+    - ui
+    - headless-service
 
 inputs:
   - name: image
@@ -55,7 +63,6 @@ resources:
       port: 3306
       resources:
         profile: "{{ .inputs.resourceProfile }}"
-      reconcile: true
       probes:
         startup:
           type: tcp
@@ -84,18 +91,15 @@ resources:
       headless: true
       port: 3306
       targetPort: 3306
-      reconcile: true
 
     - name: "{{ .metadata.name }}-mysql"
       port: 3306
       targetPort: 3306
-      reconcile: true
 
     - name: "{{ .metadata.name }}-phpmyadmin-svc"
       port: 80
       targetPort: 80
       type: LoadBalancer
-      reconcile: true
       when:
         - field: inputs.enableUI
           equals: "true"
@@ -111,7 +115,6 @@ resources:
       port: 80
       resources:
         profile: "{{ .inputs.resourceProfile }}"
-      reconcile: true
       probes:
         liveness:
           type: http

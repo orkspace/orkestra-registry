@@ -2,12 +2,21 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: kafka
-  version: v3
+  version: 0.1.0
   description: >
     Apache Kafka StatefulSet in KRaft mode (no Zookeeper), persistent storage,
     headless Service for broker DNS, external Service, and Kafka UI management console.
   author: orkspace
   license: Apache-2.0
+  tags:
+    - kafka
+    - messaging
+    - streaming
+    - statefulset
+    - storage
+    - kraft
+    - distributed
+    - ui
 
 inputs:
   - name: image
