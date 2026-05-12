@@ -25,17 +25,14 @@ spec:
         group: myapp.io
         version: v1alpha1
         kind: Database
-
-      operatorBox:
-        onCreate:
-          motifs:
-            - ref: ghcr.io/orkspace/orkestra-registry/patterns/motifs/postgres@v17
-              inputs:
-                image: "{{ .spec.postgresImage | default \"postgres:latest\" }}"
-                database: "{{ .spec.dbName }}"
-                volumeSize: "{{ .spec.storageSize | default \"20Gi\" }}"
-                storageClass: "{{ .spec.storageClass | default \"standard\" }}"
-                resourceProfile: "{{ .spec.resourceProfile | default \"standard\" }}"
+        imports:
+          - motif: ghcr.io/orkspace/orkestra-registry/patterns/motifs/postgres@v17
+            uses:
+              image: "{{ .spec.postgresImage | default \"postgres:latest\" }}"
+              database: "{{ .spec.dbName }}"
+              volumeSize: "{{ .spec.storageSize | default \"20Gi\" }}"
+              storageClass: "{{ .spec.storageClass | default \"standard\" }}"
+              resourceProfile: "{{ .spec.resourceProfile | default \"standard\" }}"
 ```
 
 ## Probe Profiles
