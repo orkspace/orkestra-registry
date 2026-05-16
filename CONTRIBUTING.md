@@ -1,97 +1,302 @@
 # Contributing to the Orkestra Registry
 
-Thank you for your interest in contributing! The Orkestra Registry is a community‑driven library of declarative operator patterns. Your contributions help make operator development faster and more accessible.
+The Orkestra Registry is a community-driven library of declarative operator patterns. Contributions that help operators deploy faster and more reliably are always welcome.
 
-## Ways to Contribute
+## Ways to contribute
 
-- **Add a new pattern** – create a versioned directory under `orkestra-core/` with the required files.
-- **Improve an existing pattern** – fix bugs, enhance templates, improve documentation.
-- **Add a typed extension** – write Go hooks or custom reconcilers in `typed-extensions/`.
-- **Promote a typed extension** – help turn a successful typed extension into a declarative pattern.
+- **Add a Katalog** — a complete CRD operator (declarative or typed)
+- **Add a Motif** — a reusable resource blueprint imported by Katalogs
+- **Improve an existing pattern** — fix bugs, improve templates, improve documentation
+- **Add a typed extension** — Go hooks or constructors for behavior that can't yet be expressed declaratively
 
-## Adding a New Pattern
+---
 
-### 1. Choose a name and version
+## Pattern file structure
 
-Patterns are stored under `orkestra-core/<pattern-name>/<version>/`. Use semantic versioning (e.g., `v1.0.0`). The pattern name should be lower‑cased and match the CRD’s kind.
+Every pattern lives in its own directory. The directory name becomes the registry artifact name.
 
-### 2. Create the required files
+### Katalog
 
-Each version directory must contain:
+```
+patterns/katalogs/<name>/
+  katalog.yaml     # required — the operator definition
+  crd.yaml         # optional — the CustomResourceDefinition
+  cr.yaml          # optional — an example Custom Resource
+  e2e.yaml         # optional — declarative end-to-end tests
+  README.md        # optional — shown in the registry UI
+```
 
-- `crd.yaml` – the CustomResourceDefinition.
-- `katalog.yaml` – the declarative operator definition.
-- `komposer.yaml` – an example Komposer showing import and overrides.
-- `cr.yaml` – an example Custom Resource.
-- `README.md` – documentation.
+| File | Description |
+|------|-------------|
+| `katalog.yaml` | Required. The Orkestra Katalog spec (`kind: Katalog`). |
+| `crd.yaml` | The CRD YAML. Included in pushed artifacts so consumers can install it independently. |
+| `cr.yaml` | An example CR showing the minimal fields needed to instantiate the operator. |
+| `e2e.yaml` | Declarative E2E tests. When present, `ork registry push` runs these as a gate before publishing. |
+| `README.md` | Shown in `ork registry info` and the registry web UI. Explain what the pattern does and how to configure it. |
 
-See the `postgres/v14` example for reference.
+### Motif
 
-### 3. Test locally
+```
+patterns/motifs/<name>/
+  motif.yaml       # required — the Motif spec
+  README.md        # optional — shown in the registry UI
+  example/
+    katalog.yaml   # optional — example Katalog importing this Motif
+```
 
-- Install the CRD: `kubectl apply -f crd.yaml`.
-- Run Orkestra with your pattern: `ork run --katalog komposer.yaml`.
-- Apply the example CR: `kubectl apply -f cr.yaml`.
-- Verify that the expected resources are created.
+### Typed extension
 
-### 4. Open a pull request
+```
+patterns/typed-extensions/hooks/<name>/
+  <name>.go        # required — exported hook function
+  go.mod           # required — Go module
+  README.md        # required — usage instructions
 
-The CI will validate the pattern and, if merged, automatically publish it as an OCI artifact to `ghcr.io/orkestra-sh/orkestra-registry`.
+patterns/typed-extensions/constructors/<name>/
+  <name>.go        # required — exported constructor function
+  go.mod           # required
+  README.md        # required
+```
 
-## Adding a Typed Extension
+---
 
-### 1. Choose a name and version
+## Adding a Katalog
 
-Extensions live under `typed-extensions/hooks/<name>/<version>/` or `typed-extensions/constructors/<name>/<version>/`. Versioning follows semantic versioning.
+### 1. Create the directory
 
-### 2. Write the Go code
+```
+patterns/katalogs/<your-name>/
+```
 
-Create a Go module with a `go.mod` file. The exported function must match the expected signature:
+Use lowercase, hyphen-separated names (e.g. `postgres`, `nginx-ingress`, `cert-manager`).
 
-- For hooks: `func() domain.AnyReconcileHooks`
-- For constructors: `func(kube *kubeclient.Kubeclient, inf cache.SharedIndexInformer, ev *event.Event) domain.Reconciler`
+### 2. Write `katalog.yaml`
 
-### 3. Add a `README.md`
+Follow the [Katalog schema](https://docs.orkestra.sh/reference/schema/katalog). At minimum:
 
-Explain what the extension does, how to use it, and any configuration needed.
+```yaml
+apiVersion: orkestra.orkspace.io/v1
+kind: Katalog
+metadata:
+  name: <your-name>
+spec:
+  crds:
+    <name>:
+      apiTypes:
+        group: example.io
+        version: v1alpha1
+        kind: MyResource
+        plural: myresources
+      operatorBox:
+        ...
+```
 
-### 4. Test
+### 3. Add `e2e.yaml` (strongly recommended)
 
-Test the extension with a Katalog that references it. Run `ork generate runtime` and then `ork run`.
+E2E tests gate registry publication. Without `e2e.yaml`, anyone can push with `--no-e2e`. With it, tests run automatically on every `ork registry push` — and in CI via the Orkestra GitHub Action.
+
+```yaml
+apiVersion: orkestra.orkspace.io/v1
+kind: E2E
+metadata:
+  name: <your-name>-e2e
+
+spec:
+  katalog: ./katalog.yaml
+  crd: ./crd.yaml
+  cr: ./cr.yaml
+
+  cluster:
+    provider: kind
+    name: ork-e2e
+    reuse: false
+
+  expect:
+    - name: Resource created
+      after: cr-applied
+      timeout: 60s
+      resources:
+        - kind: Deployment
+          namespace: default
+          ready: true
+
+    - name: Resource removed
+      after: cr-deleted
+      timeout: 30s
+      resources:
+        - kind: Deployment
+          namespace: default
+          count: 0
+```
+
+### 4. Test locally
+
+```sh
+# Validate the katalog
+ork validate -f patterns/katalogs/<name>/katalog.yaml
+
+# Run e2e
+ork e2e -f patterns/katalogs/<name>/e2e.yaml
+
+# Push to the registry (runs e2e gate automatically)
+ork registry push <name>:v1.0.0 patterns/katalogs/<name>/
+```
 
 ### 5. Open a pull request
 
-## Promoting a Typed Extension to Declarative
+CI validates the pattern. On merge, the pattern is automatically published to `ghcr.io/orkspace/orkestra-registry`.
 
-When a typed extension has proven useful and can be expressed declaratively, it can be promoted:
+---
 
-1. **Open an issue** to discuss the declarative representation. Include examples of the extension’s usage and propose a YAML schema.
-2. **Implement the pattern** in `orkestra-core/` following the standard format.
-3. **Deprecate the typed extension** by adding a note in its `README.md` and pointing to the new declarative pattern.
-4. **After a deprecation period**, the typed extension may be removed.
+## Adding a Motif
+
+### 1. Create the directory
+
+```
+patterns/motifs/<your-name>/
+```
+
+### 2. Write `motif.yaml`
+
+Follow the [Motif schema](https://docs.orkestra.sh/reference/schema/motif). Declare your inputs clearly — they are the public interface of the Motif.
+
+```yaml
+apiVersion: orkestra.orkspace.io/v1
+kind: Motif
+metadata:
+  name: <your-name>
+  version: v1
+  description: One-line description.
+  author: your-github-handle
+
+inputs:
+  - name: image
+    required: true
+    description: Container image (e.g. postgres:16)
+
+  - name: volumeSize
+    default: "10Gi"
+    description: PVC storage size
+
+resources:
+  statefulsets:
+    - name: "{{ .metadata.name }}"
+      image: "{{ inputs.image }}"
+      ...
+```
+
+### 3. Write a `README.md`
+
+Include:
+- What the Motif provisions
+- All `inputs` — name, type, default, description
+- An example `imports:` block showing how to use it in a Katalog
+
+### 4. Open a pull request
+
+---
+
+## Adding a Typed Extension
+
+Typed extensions are Go functions (hooks or constructors) for behaviors that can't yet be expressed declaratively.
+
+### Hook signature
+
+```go
+func() domain.AnyReconcileHooks
+```
+
+### Constructor signature
+
+```go
+func(kube *kubeclient.Kubeclient, inf cache.SharedIndexInformer, ev *event.Event) domain.Reconciler
+```
+
+Include a `README.md` explaining what the extension does, how to wire it into a Katalog via `ork generate registry`, and any configuration needed.
+
+---
+
+## The e2e gate
+
+`ork registry push` automatically detects `e2e.yaml` in the pattern directory and runs it before publishing. If the tests fail, the push is blocked.
+
+```sh
+# Normal push — runs e2e.yaml if present
+ork registry push postgres:v1.0.0 patterns/katalogs/postgres/
+
+# Skip the gate (CI already ran it)
+ork registry push postgres:v1.0.0 patterns/katalogs/postgres/ --no-e2e
+
+# Override failures (not recommended for community patterns)
+ork registry push postgres:v1.0.0 patterns/katalogs/postgres/ --force
+```
+
+All community patterns submitted via PR must pass e2e in CI before merging.
+
+---
+
+## CI with the Orkestra GitHub Action
+
+The Orkestra Action handles install, validate, e2e, and publish in one step. No scripts needed.
+
+```yaml
+name: Publish pattern
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: orkspace/orkestra-action@v1
+        with:
+          validate: ./katalog.yaml
+          e2e: ./e2e.yaml
+          registry-push: "postgres:${{ github.ref_name }} ."
+          registry-url: ghcr.io/${{ github.repository_owner }}/patterns
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+```
+
+---
 
 ## Versioning
 
-Patterns and typed extensions follow semantic versioning:
+Patterns follow semantic versioning.
 
-- **v1.0.0** – initial stable release.
-- **v1.1.0** – new features (backward compatible).
-- **v2.0.0** – breaking changes (requires conversion rules in the Katalog).
+| Version bump | When |
+|-------------|------|
+| `v1.0.0` | Initial stable release |
+| `v1.1.0` | New inputs or resources (backward compatible) |
+| `v2.0.0` | Breaking input changes or resource restructuring |
 
-When updating a pattern, create a new version directory. Do not modify existing version directories.
+Each version is a separate OCI tag. Do not overwrite an existing version — create a new tag.
 
-## Testing
+If a new version changes required inputs, document the migration in `README.md`.
 
-All contributions should be tested. For patterns, include a test Komposer and CR. For typed extensions, include unit tests for the Go code.
+---
 
-## Community and Review
+## Promoting a typed extension to declarative
 
-All contributions are reviewed by maintainers. Please be patient; we will respond as soon as possible.
+When a typed extension can be expressed declaratively:
 
-For questions or suggestions, open a [GitHub Discussion](https://github.com/orkspace/orkestra-registry/discussions).
+1. Open an issue with the proposed YAML schema and examples.
+2. Implement the pattern under `patterns/katalogs/` or `patterns/motifs/`.
+3. Add a deprecation note in the extension's `README.md` pointing to the new pattern.
+4. After a deprecation window, the typed extension may be removed.
+
+---
+
+## Questions
+
+Open a [GitHub Discussion](https://github.com/orkspace/orkestra-registry/discussions).
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE), the same license as the [Orkestra runtime](https://github.com/orkspace/orkestra).
-
-**Thank you for helping build the future of declarative operators!** 🎼
+By contributing you agree that your contributions will be licensed under the [Apache-2.0 License](LICENSE).
