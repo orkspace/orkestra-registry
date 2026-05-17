@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: redis
-  version: 0.1.0
+  version: v0.1.0
   description: >
     Redis StatefulSet with optional persistent storage, headless Service for pod DNS,
     client Service, and Redis Commander management UI. Works with redis:6 through redis:7.
@@ -93,7 +93,7 @@ resources:
     - name: "{{ .metadata.name }}-commander"
       image: "{{ .inputs.commanderImage }}"
       env:
-        REDIS_HOSTS:
+        - name: REDIS_HOSTS
           value: "{{ .metadata.name }}-redis:6379"
       port: 8081
       resources:

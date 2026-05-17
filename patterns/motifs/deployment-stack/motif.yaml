@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: deployment-stack
-  version: 0.1.0
+  version: v0.1.0
   description: >
     Full application deployment stack: ServiceAccount, Role, RoleBinding,
     Deployment, Service, HPA, PDB, and optional Ingress.

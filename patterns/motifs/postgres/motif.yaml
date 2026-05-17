@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: postgres
-  version: v17
+  version: v0.1.0
   description: >
     PostgreSQL StatefulSet with persistent storage, headless Service for pod DNS,
     client Service, and pgAdmin management UI.
@@ -91,14 +91,15 @@ resources:
           storageSize: "{{ .inputs.volumeSize }}"
           mountPath: /var/lib/postgresql/data
       env:
-        POSTGRES_DB:
+        - name: POSTGRES_DB
           value: "{{ .inputs.database }}"
-        POSTGRES_USER:
+        - name: POSTGRES_USER
           value: "{{ .inputs.username }}"
-        POSTGRES_PASSWORD:
-          secretKeyRef:
-                name: "{{ .metadata.name }}-creds"
-                key: password
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .metadata.name }}-creds"
+              key: password
 
   services:
     - name: "{{ .metadata.name }}-postgres-headless"
@@ -122,9 +123,9 @@ resources:
     - name: "{{ .metadata.name }}-pgadmin"
       image: "{{ .inputs.pgAdminImage }}"
       env:
-        PGADMIN_DEFAULT_EMAIL:
+        - name: PGADMIN_DEFAULT_EMAIL
           value: "admin@orkestra.local"
-        PGADMIN_DEFAULT_PASSWORD:
+        - name: PGADMIN_DEFAULT_PASSWORD
           value: "admin"
       port: 80
       resources:

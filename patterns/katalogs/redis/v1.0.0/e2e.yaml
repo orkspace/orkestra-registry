@@ -1,0 +1,56 @@
+apiVersion: orkestra.orkspace.io/v1
+kind: E2E
+metadata:
+  name: redis-e2e
+  description: End-to-end test for the redis katalog pattern
+spec:
+  cluster:
+    name: ork-e2e-redis
+    provider: kind
+    reuse: false
+  katalog: ./katalog.yaml
+  crd: ./crd.yaml
+  cr: ./cr.yaml
+  expect:
+    - name: "CR created"
+      after: cr-applied
+      timeout: 30s
+      resources:
+        - kind: Redis
+          name: my-redis
+          namespace: default
+
+    - name: "StatefulSet running"
+      after: cr-applied
+      timeout: 300s
+      resources:
+        - kind: StatefulSet
+          name: my-redis-redis
+          namespace: default
+          ready: true
+
+    - name: "Service exists"
+      after: cr-applied
+      timeout: 60s
+      resources:
+        - kind: Service
+          name: my-redis-redis
+          namespace: default
+
+    - name: "CR deleted"
+      after: cr-deleted
+      timeout: 60s
+      resources:
+        - kind: Redis
+          name: my-redis
+          namespace: default
+          count: 0
+
+    - name: "StatefulSet removed"
+      after: cr-deleted
+      timeout: 90s
+      resources:
+        - kind: StatefulSet
+          name: my-redis-redis
+          namespace: default
+          count: 0

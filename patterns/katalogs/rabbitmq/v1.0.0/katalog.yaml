@@ -1,0 +1,48 @@
+apiVersion: orkestra.orkspace.io/v1
+kind: Katalog
+metadata:
+  name: rabbitmq
+  version: v1.0.0
+  description: >-
+    A declarative RabbitMQ deployment pattern that provisions a single‑instance
+    RabbitMQ broker using the management image. The pattern accepts any valid
+    RabbitMQ image tag through spec.version and exposes port 5672 for AMQP
+    traffic via a stable Service. The built‑in management UI runs on port 15672.
+    Suitable for task queues, event‑driven architectures, and microservice messaging.
+  author: orkspace
+  license: Apache-2.0
+  tags:
+    - rabbitmq
+    - messaging
+    - amqp
+    - stateful
+    - persistent-storage
+    - service
+    - single-instance
+    - development
+    - ci
+    - production-ready
+    - storage
+    - katalog
+
+spec:
+  crds:
+    rabbitmq:
+      apiTypes:
+        group: rabbitmq.orkestra.io
+        version: v1
+        kind: RabbitMQ
+        plural: rabbitmqs
+      workers: 2
+      resync: 1m
+      imports:
+        - motif: oci://ghcr.io/orkspace/orkestra-registry/patterns/motifs/rabbitmq:v0.1.0
+          with:
+            image: 'rabbitmq:{{ .spec.version | default "management" }}'
+            replicas: '{{ .spec.replicas | default "1" }}'
+            resourceProfile: '{{ .spec.resourceProfile | default "small" }}'
+            volumeSize: '{{ .spec.storageSize | default "5Gi" }}'
+            storageClass: '{{ .spec.storageClass | default "standard" }}'
+            username: '{{ .spec.username | default "admin" }}'
+            vhost: '{{ .spec.vhost | default "/" }}'
+            enableUI: '{{ .spec.enableUI | default "true" }}'

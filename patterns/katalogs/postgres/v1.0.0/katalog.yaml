@@ -39,8 +39,7 @@ spec:
           with:
             image: 'postgres:{{ .spec.version | default "14" }}'
             replicas: '{{ .spec.replicas | default "1" }}'
-            # resourceProfile: '{{ .spec.resourceProfile | default "burst" }}'
-            resourceProfile: "burst"
+            resourceProfile: '{{ .spec.resourceProfile | default "burst" }}'
             volumeSize: '{{ .spec.storageSize | default "10Gi" }}'
             storageClass: '{{ .spec.storageClass | default "standard" }}'
             database: '{{ .spec.database | default "app" }}'

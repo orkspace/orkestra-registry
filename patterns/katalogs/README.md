@@ -30,7 +30,7 @@ katalogs/
 ork registry pull postgres
 
 # Import in a Komposer
-sources:
+imports:
   oci:
     - ref: oci://ghcr.io/orkspace/orkestra-registry/patterns/katalogs/postgres:v1.0.0
 ```

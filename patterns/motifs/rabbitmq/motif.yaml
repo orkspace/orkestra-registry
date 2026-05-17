@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: rabbitmq
-  version: 0.1.0
+  version: v0.1.0
   description: >
     RabbitMQ StatefulSet with persistent storage, headless Service for cluster node DNS,
     AMQP Service, and built-in management UI (port 15672) via the management plugin.
@@ -76,9 +76,9 @@ resources:
           storageSize: "{{ .inputs.volumeSize }}"
           mountPath: /var/lib/rabbitmq
       env:
-        RABBITMQ_DEFAULT_USER:
+        - name: RABBITMQ_DEFAULT_USER
           value: "{{ .inputs.username }}"
-        RABBITMQ_DEFAULT_VHOST:
+        - name: RABBITMQ_DEFAULT_VHOST
           value: "{{ .inputs.vhost }}"
 
   services:

@@ -17,7 +17,7 @@ for d in */; do
   name="$(basename "$d")"
 
   echo "→ Pushing motif pattern: ${name}:${VERSION}"
-  if ! ork registry push "${name}:${VERSION}" "./${d%/}"; then
+  if ! ${HOME}/.orkestra/bin/ork registry push "${name}:${VERSION}" "./${d%/}"; then
     echo "✖ Failed to push ${name}:${VERSION}"
     exit 2
   fi

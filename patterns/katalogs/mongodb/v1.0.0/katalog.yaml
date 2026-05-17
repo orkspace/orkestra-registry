@@ -1,0 +1,48 @@
+apiVersion: orkestra.orkspace.io/v1
+kind: Katalog
+metadata:
+  name: mongodb
+  version: v1.0.0
+  description: >-
+    A declarative MongoDB deployment pattern that provisions a single‑instance
+    MongoDB server using any CR image version. The pattern accepts any valid
+    MongoDB image tag through spec.version, defaults to 7, and exposes port 27017
+    via a stable Service. Includes an optional mongo-express management UI.
+    Suitable for development, CI, and controlled production.
+  author: orkspace
+  license: Apache-2.0
+  tags:
+    - mongodb
+    - database
+    - nosql
+    - stateful
+    - persistent-storage
+    - service
+    - single-instance
+    - development
+    - ci
+    - production-ready
+    - storage
+    - katalog
+
+spec:
+  crds:
+    mongodb:
+      apiTypes:
+        group: mongodb.orkestra.io
+        version: v1
+        kind: MongoDB
+        plural: mongodbs
+      workers: 2
+      resync: 1m
+      imports:
+        - motif: oci://ghcr.io/orkspace/orkestra-registry/patterns/motifs/mongodb:v0.1.0
+          with:
+            image: 'mongo:{{ .spec.version | default "7" }}'
+            replicas: '{{ .spec.replicas | default "1" }}'
+            resourceProfile: '{{ .spec.resourceProfile | default "standard" }}'
+            volumeSize: '{{ .spec.storageSize | default "10Gi" }}'
+            storageClass: '{{ .spec.storageClass | default "standard" }}'
+            database: '{{ .spec.database | default "app" }}'
+            username: '{{ .spec.username | default "admin" }}'
+            enableUI: '{{ .spec.enableUI | default "true" }}'

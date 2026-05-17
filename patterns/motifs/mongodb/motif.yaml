@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: mongodb
-  version: 0.1.0
+  version: v0.1.0
   description: >
     MongoDB StatefulSet with persistent storage, headless Service for pod DNS,
     client Service, and mongo-express management UI.
@@ -79,9 +79,9 @@ resources:
           storageSize: "{{ .inputs.volumeSize }}"
           mountPath: /data/db
       env:
-        MONGO_INITDB_DATABASE:
+        - name: MONGO_INITDB_DATABASE
           value: "{{ .inputs.database }}"
-        MONGO_INITDB_ROOT_USERNAME:
+        - name: MONGO_INITDB_ROOT_USERNAME
           value: "{{ .inputs.username }}"
 
   services:
@@ -106,11 +106,11 @@ resources:
     - name: "{{ .metadata.name }}-mongoexpress"
       image: "{{ .inputs.mongoExpressImage }}"
       env:
-        ME_CONFIG_MONGODB_SERVER:
+        - name: ME_CONFIG_MONGODB_SERVER
           value: "{{ .metadata.name }}-mongodb"
-        ME_CONFIG_MONGODB_PORT:
+        - name: ME_CONFIG_MONGODB_PORT
           value: "27017"
-        ME_CONFIG_BASICAUTH:
+        - name: ME_CONFIG_BASICAUTH
           value: "false"
       port: 8081
       resources:

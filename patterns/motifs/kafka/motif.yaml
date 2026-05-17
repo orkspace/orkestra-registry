@@ -2,7 +2,7 @@ apiVersion: orkestra.orkspace.io/v1
 kind: Motif
 metadata:
   name: kafka
-  version: 0.1.0
+  version: v0.1.0
   description: >
     Apache Kafka StatefulSet in KRaft mode (no Zookeeper), persistent storage,
     headless Service for broker DNS, external Service, and Kafka UI management console.
@@ -73,23 +73,23 @@ resources:
           storageSize: "{{ .inputs.volumeSize }}"
           mountPath: /var/lib/kafka/data
       env:
-        KAFKA_NODE_ID:
+        - name: KAFKA_NODE_ID
           value: "1"
-        KAFKA_PROCESS_ROLES:
+        - name: KAFKA_PROCESS_ROLES
           value: "broker,controller"
-        KAFKA_LISTENERS:
+        - name: KAFKA_LISTENERS
           value: "PLAINTEXT://:9092,CONTROLLER://:9093"
-        KAFKA_ADVERTISED_LISTENERS:
+        - name: KAFKA_ADVERTISED_LISTENERS
           value: "PLAINTEXT://{{ .metadata.name }}-kafka-0.{{ .metadata.name }}-kafka-headless.{{ .metadata.namespace }}.svc.cluster.local:9092"
-        KAFKA_CONTROLLER_QUORUM_VOTERS:
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
           value: "1@{{ .metadata.name }}-kafka-0.{{ .metadata.name }}-kafka-headless.{{ .metadata.namespace }}.svc.cluster.local:9093"
-        KAFKA_CONTROLLER_LISTENER_NAMES:
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
           value: "CONTROLLER"
-        KAFKA_INTER_BROKER_LISTENER_NAME:
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
           value: "PLAINTEXT"
-        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
           value: "1"
-        KAFKA_LOG_DIRS:
+        - name: KAFKA_LOG_DIRS
           value: "/var/lib/kafka/data"
 
   services:
@@ -117,9 +117,9 @@ resources:
     - name: "{{ .metadata.name }}-kafka-ui"
       image: "{{ .inputs.kafkaUiImage }}"
       env:
-        KAFKA_CLUSTERS_0_NAME:
+        - name: KAFKA_CLUSTERS_0_NAME
           value: "{{ .metadata.name }}"
-        KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS:
+        - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
           value: "{{ .metadata.name }}-kafka.{{ .metadata.namespace }}.svc.cluster.local:9092"
       port: 8080
       resources:

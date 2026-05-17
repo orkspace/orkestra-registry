@@ -1,0 +1,17 @@
+apiVersion: orkestra.konductor.io/v1Alpha
+kind: Komposer
+metadata:
+  name: redis-example
+  description: Example Komposer showing how to consume the redis pattern
+
+sources:
+  registry:
+    - url: ghcr.io/orkestra-sh/orkestra-registry/redis@v1.0.0
+      oci: true
+
+spec:
+  crds:
+    # Production overrides — recommended for non-development environments
+    - name: redis
+      workers: 4        # default is 2 — increase for higher throughput
+      resync: 30s       # default is 1m — reduce for faster drift detection
