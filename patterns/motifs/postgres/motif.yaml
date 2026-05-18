@@ -55,6 +55,10 @@ inputs:
     description: Deploy the pgAdmin management UI (true/false)
     default: "true"
 
+  - name: passwordRotation
+    description: How often to rotate the generated password secret (e.g. 30d, 90d, 365d). Set to "never" to disable rotation.
+    default: "30d"
+
 resources:
   # Special case
   # Created just once, not reconciled
@@ -62,7 +66,7 @@ resources:
     secrets:
       - name: "{{ .metadata.name }}-creds"
         once: true
-        rotateAfter: 30d
+        rotateAfter: "{{ .inputs.passwordRotation }}"
         data:
           password: "{{ randomAlphanumeric 16 }}"
 

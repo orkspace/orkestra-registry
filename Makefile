@@ -62,6 +62,7 @@ push-katalogs:
 	  [ -d "$$dir" ] || continue; \
 	  echo ""; \
 	  echo "→ $$name:$(KATALOG_VERSION)"; \
+	  $(ORK) registry pull -f "$$dir/katalog.yaml" || exit 1; \
 	  $(ORK) registry push "$$name:$(KATALOG_VERSION)" "$$dir" $(_force_flag) || exit 1; \
 	done
 	@echo ""
@@ -69,6 +70,8 @@ push-katalogs:
 
 .PHONY: push-katalog
 push-katalog: _require_name
+	@echo "→ Pulling OCI imports for $(NAME)..."
+	$(ORK) registry pull -f "$(KATALOGS_DIR)/$(NAME)/$(KATALOG_VERSION)/katalog.yaml"
 	@echo "→ Pushing katalog $(NAME):$(KATALOG_VERSION)..."
 	$(ORK) registry push "$(NAME):$(KATALOG_VERSION)" \
 	  "$(KATALOGS_DIR)/$(NAME)/$(KATALOG_VERSION)" $(_force_flag)

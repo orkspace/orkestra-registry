@@ -54,7 +54,19 @@ inputs:
     description: Deploy the mongo-express management UI (true/false)
     default: "true"
 
+  - name: passwordRotation
+    description: How often to rotate the generated password secret (e.g. 30d, 90d, 365d). Set to "never" to disable rotation.
+    default: "30d"
+
 resources:
+  onCreate:
+    secrets:
+      - name: "{{ .metadata.name }}-creds"
+        once: true
+        rotateAfter: "{{ .inputs.passwordRotation }}"
+        data:
+          password: "{{ randomAlphanumeric 16 }}"
+
   statefulSets:
     - name: "{{ .metadata.name }}-mongodb"
       image: "{{ .inputs.image }}"
@@ -83,6 +95,11 @@ resources:
           value: "{{ .inputs.database }}"
         - name: MONGO_INITDB_ROOT_USERNAME
           value: "{{ .inputs.username }}"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .metadata.name }}-creds"
+              key: password
 
   services:
     - name: "{{ .metadata.name }}-mongodb-headless"
@@ -112,6 +129,13 @@ resources:
           value: "27017"
         - name: ME_CONFIG_BASICAUTH
           value: "false"
+        - name: ME_CONFIG_MONGODB_AUTH_USERNAME
+          value: "{{ .inputs.username }}"
+        - name: ME_CONFIG_MONGODB_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .metadata.name }}-creds"
+              key: password
       port: 8081
       resources:
         profile: "{{ .inputs.resourceProfile }}"
@@ -132,6 +156,8 @@ status:
   fields:
     - path: mongodbReady
       value: "{{ AllReplicasReady .children.statefulset }}"
+    - path: connectionSecret
+      value: "{{ .metadata.name }}-creds"
     - path: connectionString
       value: "mongodb://{{ .inputs.username }}@{{ .metadata.name }}-mongodb.{{ .metadata.namespace }}.svc.cluster.local:27017/{{ .inputs.database }}"
     - path: mongoExpressUrl

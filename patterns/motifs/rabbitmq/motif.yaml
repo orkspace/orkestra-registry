@@ -67,8 +67,7 @@ resources:
           type: tcp
           profile: standard
         readiness:
-          type: http
-          path: /api/health/checks
+          type: tcp
           profile: standard
       volumeClaimTemplates:
         - name: data

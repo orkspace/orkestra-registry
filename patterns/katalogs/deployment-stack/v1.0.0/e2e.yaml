@@ -1,0 +1,64 @@
+apiVersion: orkestra.orkspace.io/v1
+kind: E2E
+metadata:
+  name: deployment-stack-e2e
+  description: End-to-end test for the deployment-stack katalog pattern
+spec:
+  cluster:
+    name: ork-e2e-deployment-stack
+    provider: kind
+    reuse: false
+  katalog: ./katalog.yaml
+  crd: ./crd.yaml
+  cr: ./cr.yaml
+  expect:
+    - name: "CR created"
+      after: cr-applied
+      timeout: 30s
+      resources:
+        - kind: Application
+          name: my-app
+          namespace: default
+
+    - name: "Deployment running"
+      after: cr-applied
+      timeout: 120s
+      resources:
+        - kind: Deployment
+          name: my-app
+          namespace: default
+          ready: true
+
+    - name: "Service exists"
+      after: cr-applied
+      timeout: 60s
+      resources:
+        - kind: Service
+          name: my-app-svc
+          namespace: default
+
+    - name: "HPA exists"
+      after: cr-applied
+      timeout: 60s
+      resources:
+        - kind: HorizontalPodAutoscaler
+          name: my-app-hpa
+          namespace: default
+
+    - name: "CR deleted"
+      after: cr-deleted
+      timeout: 60s
+      resources:
+        - kind: Application
+          name: my-app
+          namespace: default
+          count: 0
+
+    - name: "Deployment removed"
+      after: cr-deleted
+      timeout: 90s
+      resources:
+        - kind: Deployment
+          name: my-app
+          namespace: default
+          count: 0

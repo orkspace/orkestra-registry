@@ -62,7 +62,7 @@ inputs:
 
 resources:
   namespaces:
-    - name: ${{ .inputs.namespace }}
+    - name: '{{ .inputs.namespace }}'
 
   serviceAccounts:
     - name: '{{ .inputs.name }}-sa'
@@ -97,9 +97,6 @@ resources:
       serviceAccountName: '{{ .inputs.name }}-sa'
       resources:
         profile: '{{ .inputs.resourceProfile }}'
-      when:
-        - field: data.image
-          exists: true
 
   services:
     - name: '{{ .inputs.name }}-svc'
@@ -115,7 +112,7 @@ resources:
       servicePort: '{{ .inputs.port }}'
       ingressClass: '{{ .inputs.ingressClass }}'
       when:
-        - field: data.host
+        - field: '{{ .inputs.host }}'
           exists: true
 
   hpa:
@@ -128,9 +125,6 @@ resources:
       minReplicas: '{{ .inputs.replicas }}'
       maxReplicas: '{{ .inputs.maxReplicas }}'
       targetCPUUtilizationPercentage: "70"
-      when:
-        - field: data.image
-          exists: true
 
   pdb:
     - name: '{{ .inputs.name }}-pdb'
