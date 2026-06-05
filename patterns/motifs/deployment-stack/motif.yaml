@@ -49,7 +49,7 @@ inputs:
     default: "burst"
     description: Orkestra resource profile (burst, standard, optimized)
 
-  - name: ingressClass
+  - name: className
     default: "nginx"
     description: Ingress class name (nginx, traefik, kong, etc.)
 
@@ -110,7 +110,7 @@ resources:
       host: '{{ .inputs.host }}'
       serviceName: '{{ .inputs.name }}-svc'
       servicePort: '{{ .inputs.port }}'
-      ingressClass: '{{ .inputs.ingressClass }}'
+      className: '{{ .inputs.className }}'
       when:
         - field: '{{ .inputs.host }}'
           exists: true

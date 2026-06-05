@@ -42,5 +42,5 @@ spec:
             replicas: '{{ .spec.replicas }}'
             maxReplicas: '{{ .spec.maxReplicas }}'
             resourceProfile: '{{ .spec.resourceProfile }}'
-            ingressClass: '{{ .spec.ingressClass }}'
+            className: '{{ .spec.className }}'
             host: '{{ .spec.host }}'
