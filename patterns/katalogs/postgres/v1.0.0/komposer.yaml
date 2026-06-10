@@ -1,17 +1,17 @@
-apiVersion: orkestra.konductor.io/v1Alpha
+apiVersion: orkestra.orkspace.io/v1
 kind: Komposer
 metadata:
   name: postgres-example
   description: Example Komposer showing how to consume the postgres pattern
 
-sources:
+imports:
   registry:
-    - url: ghcr.io/orkestra-sh/orkestra-registry/postgres@v14.0.0
+    - url: ghcr.io/orkspace/orkestra-registry/patterns/katalogs/postgres@v1.0.0
       oci: true
 
 spec:
   crds:
     # Production overrides — recommended for non-development environments
-    - name: postgres
+    postgres:
       workers: 4        # default is 2 — increase for higher throughput
       resync: 30s       # default is 1m — reduce for faster drift detection
